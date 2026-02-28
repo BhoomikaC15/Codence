@@ -16,9 +16,11 @@ understanding. Points and leaderboards keep it competitive.
 
 ## Project Structure
 codequest/
+```
 ├── frontend/   → React app
 ├── backend/    → FastAPI + Nova integration
 └── README.md
+```
 
 ## Team
 -Bhoomika Choudhury
