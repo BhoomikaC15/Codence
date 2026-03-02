@@ -144,6 +144,7 @@ function CreateGuild() {
 
         {/* Create Button */}
         <button
+          onClick={() => navigate('/guild-lobby')}
           disabled={!playerName || !guildName}
           className="w-full py-4 text-xs font-bold mb-4 transition-all active:translate-y-1"
           style={{
