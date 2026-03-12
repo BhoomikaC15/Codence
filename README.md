@@ -37,7 +37,7 @@ Students often glance at code, think they understand it, and move on — only to
 ```
 Codence/
 ├── frontend/         → React app (UI, game screens, animations)
-├── backend/          → FastAPI server + Nova AI integration
+├── backend/          → FastAPI server, Socket.IO, game state & Nova AI integration
 └── README.md
 ```
 
@@ -55,13 +55,12 @@ npm start
 ### Backend
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # Mac/Linux
+python -m venv .venv
+source .venv/bin/activate     # Mac/Linux
+.venv\Scripts\activate        # Windows
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:combined_app --reload --port 8001
 ```
-
 ---
 
 ## 🤖 Nova AI Integration
@@ -73,6 +72,36 @@ uvicorn main:app --reload
 | **Nova Lite** | Evaluates player fill-in-the-blank answers and generates quiz options |
 
 ---
+## ⚙️ Backend Infrastructure
+
+The backend powers all real-time multiplayer functionality and game state for Codence.
+
+### What's built:
+- **FastAPI server** with REST routes and health check endpoint
+- **Socket.IO integration** for real-time communication between players
+- **Room (Guild) system** — players can create a room and get a unique 6-digit code, or join an existing room using a code
+- **Game state management** — tracks all players in a room, their scores, current round, and leaderboard
+- **Auto cleanup** — empty rooms are deleted automatically, disconnected players are removed gracefully
+- **Leaderboard broadcasting** — score updates are pushed live to all players in the room
+
+### Socket.IO Events:
+
+| Event | Direction | What it does |
+|---|---|---|
+| `create_room_event` | Client → Server | Creates a new guild room, returns 6-digit code |
+| `join_room_event` | Client → Server | Joins an existing room using a code |
+| `leave_room_event` | Client → Server | Removes player from room |
+| `submit_score` | Client → Server | Updates player score, broadcasts leaderboard |
+| `player_joined` | Server → All | Notifies room when someone joins |
+| `player_left` | Server → All | Notifies room when someone leaves |
+| `leaderboard_update` | Server → All | Pushes live leaderboard to all players |
+
+### Files:
+- `backend/main.py` — FastAPI + Socket.IO server, all event handlers
+- `backend/game_state.py` — Room creation, player management, score tracking
+- `backend/requirements.txt` — Python dependencies
+
+---
 
 ## 👾 Team
 
@@ -80,7 +109,7 @@ uvicorn main:app --reload
 |---|---|
 | Bhoomika Choudhury | Frontend — UI & Game Screens |
 | Disha Tyagi | Backend — Rooms, Sockets & Deployment |
-| Himani Lal | Nova Lite — Quiz Generation |
+| Himani Lal | Backend — FastAPI Server, Socket.IO Multiplayer & Game State  |
 | Ghanisht Sobti | Nova Pro + Sonic — Code Explanation |
 
 ---
