@@ -63,6 +63,31 @@ uvicorn main:app --reload
 ```
 
 ---
+## 🧠 AI Code Explanation
+
+Codence uses **Amazon Nova AI via AWS Bedrock** to explain code before gameplay begins.
+
+When a user submits code:
+
+1. The backend sends the code to **Amazon Nova Pro**.
+2. Nova Pro generates a **statement-by-statement explanation** of the code.
+3. The explanation is sent to **Amazon Nova Sonic** to generate **voice narration**.
+4. The backend returns both **text explanation and audio narration** to the frontend.
+
+### API Endpoint
+
+POST /explain-code
+
+Request:
+{
+  "code": "def add(a,b): return a+b"
+}
+
+Response:
+{
+  "explanation": "Step-by-step explanation of the code",
+  "audio_base64": "generated audio narration"
+}
 
 ## 🤖 Nova AI Integration
 
