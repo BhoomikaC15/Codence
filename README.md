@@ -60,6 +60,71 @@ source .venv/bin/activate     # Mac/Linux
 .venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 uvicorn main:combined_app --reload --port 8001
+ maind
+🤖 Nova AI Integration
+
+Codence integrates multiple AI models through Amazon Bedrock to power different stages of the gameplay experience.
+
+Model	Role in Codence
+Nova Pro	Analyzes submitted code and generates line-by-line explanations of the program logic
+Nova Sonic	Converts explanations into voice narration during the learning phase
+Nova Lite	Generates quiz questions from the submitted code and evaluates player answers during quiz rounds
+AI-Driven Learning Flow
+
+📜 A player uploads a code file
+
+🧠 Nova Pro analyzes the code and generates a clear step-by-step explanation
+
+🔊 Nova Sonic converts the explanation into audio narration for better understanding
+
+🧩 Nova Lite generates multiple-choice quiz questions based on the code
+
+⚡ During quiz rounds, Nova Lite evaluates answers and helps calculate scores
+
+This demonstrates multimodal AI capabilities including code reasoning, natural language explanation, and voice interaction.
+
+⚙️ Backend Infrastructure
+
+The backend powers all real-time multiplayer functionality and game state management.
+
+Key Features
+
+FastAPI server with REST endpoints and health checks
+
+Socket.IO integration for real-time communication between players
+
+Guild Room System — players can create rooms and share a unique 6-digit join code
+
+Game State Management — tracks players, scores, rounds, and leaderboard
+
+Automatic Cleanup — removes disconnected players and deletes empty rooms
+
+Live Leaderboard Updates — score changes are broadcast instantly to all players
+
+🔌 Socket.IO Events
+Event	Direction	Description
+create_room_event	Client → Server	Creates a guild room and returns a 6-digit code
+join_room_event	Client → Server	Joins an existing room using the code
+leave_room_event	Client → Server	Removes a player from a room
+submit_score	Client → Server	Updates player score and broadcasts leaderboard
+player_joined	Server → All	Notifies room when a player joins
+player_left	Server → All	Notifies room when a player leaves
+leaderboard_update	Server → All	Sends live leaderboard updates
+📂 Important Backend Files
+
+backend/main.py → FastAPI + Socket.IO server and event handlers
+
+backend/game_state.py → Room creation, player management, and score tracking
+
+backend/requirements.txt → Python dependencies
+
+👾 Team
+Name	Role
+Bhoomika Choudhury	Frontend — UI & Game Screens
+Disha Tyagi	Backend — FastAPI Server, Socket.IO Multiplayer & Game State
+Himani Lal	Backend — Rooms, Sockets & Deployment
+Ghanisht Sobti	AI Integration — Nova Pro & Nova Sonic Code Explanation
+=======
 ```
 ---
 ## 🧠 AI Code Explanation
@@ -133,14 +198,12 @@ The backend powers all real-time multiplayer functionality and game state for Co
 | Name | Role |
 |---|---|
 | Bhoomika Choudhury | Frontend — UI & Game Screens |
-| Disha Tyagi | Backend — Rooms, Sockets & Deployment |
-| Himani Lal | Backend — FastAPI Server, Socket.IO Multiplayer & Game State  |
+| Disha Tyagi | Backend — FastAPI Server, Socket.IO Multiplayer & Game State |
+| Himani Lal | Backend —  Rooms, Sockets & Deployment  |
 | Ghanisht Sobti | Nova Pro + Sonic — Code Explanation |
 
 ---
 
 ## 🏆 Hackathon
 
-This project is submitted under the **Multimodal Understanding** category of the Amazon Nova AI Hackathon 2026, demonstrating the use of Nova Pro, Nova Sonic, and Nova Lite across text, voice, and visual understanding.
-
-#AmazonNova
+This project is submitted under the **Multimodal Understanding** category of the Amazon Nova AI Hackathon 2026, demonstrating the use of Nova Pro, Nova Sonic, and Nova Lite across text, voicmain
