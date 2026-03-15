@@ -4,7 +4,7 @@
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from quiz_generator import generate_quiz, evaluate_answer
+from backend.quiz_generator import generate_quiz, evaluate_answer
 
 # Create the FastAPI app
 app = FastAPI(

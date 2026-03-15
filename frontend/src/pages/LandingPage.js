@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PixelButton from '../Components/PixelButton';
 
 // Animated firefly dot
 function Firefly({ style }) {
@@ -160,22 +161,15 @@ function LandingPage() {
           </p>
 
           {/* Create button */}
-          <button
+          <PixelButton
             onClick={() => navigate('/create-guild')}
-            className="w-full py-4 text-xs font-bold transition-all active:translate-y-1"
-            style={{
-              backgroundColor: '#A8FF3E',
-              border: '4px solid #2D5A1B',
-              boxShadow: '4px 4px 0px #2D5A1B',
-              color: '#0D1F0D',
-              cursor: 'pointer',
-              letterSpacing: '1px',
-            }}
-            onMouseEnter={e => e.target.style.backgroundColor = '#c4ff6e'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#A8FF3E'}
+            color="#A8FF3E"
+            shadowColor="#2D5A1B"
+            textColor="#0D1F0D"
+            fullWidth
           >
             ⚔️ CREATE GAME
-          </button>
+          </PixelButton>
 
           {/* Divider */}
           <p className="text-center text-xs" style={{ color: '#A8FF3E' }}>

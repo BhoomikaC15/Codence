@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import socket from '../socket/socket';
 
 function Tree({ left, height = 120 }) {
   return (
@@ -30,6 +31,8 @@ function CreateGuild() {
   const navigate = useNavigate();
   const [playerName, setPlayerName] = useState('');
   const [guildName, setGuildName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const fireflies = [
     { top: '15%', left: '12%', animationDelay: '0s' },
@@ -40,6 +43,53 @@ function CreateGuild() {
     { top: '70%', left: '75%', animationDelay: '1.5s' },
     { top: '30%', left: '50%', animationDelay: '0.6s' },
   ];
+
+  const handleCreate = () => {
+    if (!playerName || !guildName || loading) return;
+
+    setLoading(true);
+    setError('');
+
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      setError('Server timeout. Check backend connection and try again.');
+      socket.off('room_created');
+      socket.off('error');
+      socket.off('connect_error');
+    }, 7000);
+
+    socket.off('room_created');
+    socket.off('error');
+    socket.off('connect_error');
+
+    socket.once('room_created', (data) => {
+      clearTimeout(timeoutId);
+      setLoading(false);
+      localStorage.setItem('playerName', playerName);
+      localStorage.setItem('guildName', guildName);
+      localStorage.setItem('roomCode', data.room_code);
+      localStorage.setItem('isHost', 'true');
+      navigate('/guild-lobby');
+    });
+
+    socket.once('error', (data) => {
+      clearTimeout(timeoutId);
+      setLoading(false);
+      setError(data?.message || 'Unable to create room. Please try again.');
+    });
+
+    socket.once('connect_error', () => {
+      clearTimeout(timeoutId);
+      setLoading(false);
+      setError('Cannot connect to backend. Is server running on :8000?');
+    });
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit('create_room_event', { username: playerName });
+  };
 
   return (
     <div
@@ -144,22 +194,28 @@ function CreateGuild() {
 
         {/* Create Button */}
         <button
-          onClick={() => navigate('/guild-lobby')}
-          disabled={!playerName || !guildName}
+          onClick={handleCreate}
+          disabled={!playerName || !guildName || loading}
           className="w-full py-4 text-xs font-bold mb-4 transition-all active:translate-y-1"
           style={{
-            backgroundColor: !playerName || !guildName ? '#2D5A1B' : '#A8FF3E',
-            border: `4px solid ${!playerName || !guildName ? '#1a3a0e' : '#2D5A1B'}`,
-            boxShadow: !playerName || !guildName ? 'none' : '4px 4px 0px #2D5A1B',
-            color: !playerName || !guildName ? '#4A9A2E' : '#0D1F0D',
-            cursor: !playerName || !guildName ? 'not-allowed' : 'pointer',
+            backgroundColor: !playerName || !guildName || loading ? '#2D5A1B' : '#A8FF3E',
+            border: `4px solid ${!playerName || !guildName || loading ? '#1a3a0e' : '#2D5A1B'}`,
+            boxShadow: !playerName || !guildName || loading ? 'none' : '4px 4px 0px #2D5A1B',
+            color: !playerName || !guildName || loading ? '#4A9A2E' : '#0D1F0D',
+            cursor: !playerName || !guildName || loading ? 'not-allowed' : 'pointer',
             letterSpacing: '1px',
           }}
-          onMouseEnter={e => { if (playerName && guildName) e.target.style.backgroundColor = '#c4ff6e' }}
-          onMouseLeave={e => { if (playerName && guildName) e.target.style.backgroundColor = '#A8FF3E' }}
+          onMouseEnter={e => { if (playerName && guildName && !loading) e.target.style.backgroundColor = '#c4ff6e'; }}
+          onMouseLeave={e => { if (playerName && guildName && !loading) e.target.style.backgroundColor = '#A8FF3E'; }}
         >
-          ⚔️ CREATE GUILD
+          {loading ? '⚔️ CREATING...' : '⚔️ CREATE GUILD'}
         </button>
+
+        {error && (
+          <p className="text-xs text-center mb-2" style={{ color: '#FF6B6B' }}>
+            ⚠️ {error}
+          </p>
+        )}
 
         {/* Back */}
         <button
@@ -171,7 +227,6 @@ function CreateGuild() {
         >
           ← Back to Home
         </button>
-
       </div>
     </div>
   );

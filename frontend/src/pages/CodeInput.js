@@ -34,12 +34,15 @@ function CodeInput() {
   const [casting, setCasting] = useState(false);
 
   const handleCast = () => {
-    if (!code.trim() || !language.trim()) return;
-    setCasting(true);
-    setTimeout(() => {
-      navigate('/explanation');
-    }, 2000);
-  };
+      if (!code.trim() || !language.trim()) return;
+      setCasting(true);
+      // Save code to localStorage so Explanation screen can use it
+      localStorage.setItem('submittedCode', code);
+      localStorage.setItem('submittedLanguage', language);
+      setTimeout(() => {
+        navigate('/explanation');
+      }, 2000);
+    };
 
   const fireflies = [
     { top: '10%', left: '5%', animationDelay: '0s' },

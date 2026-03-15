@@ -1,71 +1,41 @@
-"""
-bedrock.py
-──────────
-All AWS Bedrock logic lives here.
-  - create_bedrock_client()   → returns a boto3 Bedrock Runtime client
-  - explain_code()            → calls Amazon Nova Pro to explain code
-  - text_to_speech()          → calls Amazon Nova Sonic to generate audio
-"""
-
 import json
 import base64
 import os
+from pathlib import Path
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, NoCredentialsError
 from dotenv import load_dotenv
 
-# Load environment variables from the .env file
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR.parent / ".env")
+load_dotenv(BASE_DIR / ".env")
 
-
-# ─────────────────────────────────────────────
-# 1.  Create the Bedrock client
-# ─────────────────────────────────────────────
 
 def create_bedrock_client():
-    """
-    Returns a boto3 client that talks to AWS Bedrock Runtime.
-
-    boto3 reads credentials from environment variables automatically:
-      AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
-    """
+    """Bedrock Runtime client using BEDROCK_REGION (default us-east-1)."""
     client = boto3.client(
-        service_name="bedrock-runtime",           # Always this value for inference calls
-        region_name=os.getenv("AWS_REGION", "us-east-1"),
-
-        # boto3 will pick these up from the environment automatically,
-        # but passing them explicitly makes the code easier to follow.
+        service_name="bedrock-runtime",
+        region_name=os.getenv("BEDROCK_REGION", "us-east-1"),
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     )
     return client
 
 
-# ─────────────────────────────────────────────
-# 2.  Call Amazon Nova Pro – explain the code
-# ─────────────────────────────────────────────
+def get_bedrock_target(env_var: str, default_value: str) -> str:
+    """Return a model ID or inference profile ID/ARN from env, with a safe default."""
+    return os.getenv(env_var, default_value).strip() or default_value
+
 
 def explain_code(code: str) -> str:
-    """
-    Sends `code` to Amazon Nova Pro and returns a plain-English,
-    statement-by-statement explanation suitable for a learner.
-
-    Parameters
-    ----------
-    code : str
-        The raw source code the user pasted.
-
-    Returns
-    -------
-    str
-        The explanation text from Nova Pro.
-    """
+    """Ask Nova Lite to explain code line-by-line and return numbered plain-English steps."""
     client = create_bedrock_client()
 
-    # The model ID for Amazon Nova Pro on Bedrock
-    model_id = "amazon.nova-lite-v1:0"
+    model_id = get_bedrock_target(
+        "BEDROCK_EXPLAIN_MODEL_ID",
+        "us.amazon.nova-lite-v1:0",
+    )
 
-    # Build the prompt.  Nova Pro uses the "messages" API (same shape as Claude).
     prompt = f"""You are a friendly coding tutor.
 Explain the following code clearly, statement by statement.
 Use simple language suitable for a beginner.
@@ -78,78 +48,9 @@ CODE:
 
 Give ONLY the explanation. Do not repeat the code."""
 
-    # The request body Bedrock expects for Nova Pro
     request_body = {
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"text": prompt}]
-            }
-        ],
-        "inferenceConfig": {
-            "maxTokens": 2048,       # Maximum words in the reply
-            "temperature": 0.3,      # Lower = more focused / deterministic
-        }
-    }
-
-    try:
-        response = client.invoke_model(
-            modelId=model_id,
-            body=json.dumps(request_body),          # Must be a JSON string
-            contentType="application/json",
-            accept="application/json",
-        )
-
-        # Parse the response body
-        response_body = json.loads(response["body"].read())
-
-        # Nova Pro returns text inside output → message → content[0] → text
-        explanation = response_body["output"]["message"]["content"][0]["text"]
-        return explanation.strip()
-
-    except ClientError as e:
-        # Surface AWS errors clearly
-        error_code = e.response["Error"]["Code"]
-        error_msg  = e.response["Error"]["Message"]
-        raise RuntimeError(f"Bedrock Nova Pro error [{error_code}]: {error_msg}")
-
-
-# ─────────────────────────────────────────────
-# 3.  Call Amazon Nova Sonic – text → audio
-# ─────────────────────────────────────────────
-
-def text_to_speech(text: str) -> str:
-    client = create_bedrock_client()
-
-    model_id = "amazon.nova-sonic-v1:0"
-
-    body = {
-        "input": text,
-        "voice": "Matthew"
-    }
-
-    response = client.invoke_model(
-        modelId=model_id,
-        body=json.dumps(body),
-        contentType="application/json",
-        accept="audio/mpeg"
-    )
-
-    audio_bytes = response["body"].read()
-    audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
-
-    return audio_base64
-
-    # The model ID for Amazon Nova Sonic on Bedrock
-    model_id="amazon.nova-sonic-v1:0"
-
-    # Nova Sonic uses a different request shape than Nova Pro.
-    # It follows the Bedrock "speech synthesis" API.
-    request_body = {
-        "text": text,
-        "voiceConfig": {
-            "presetVoice": "Matthew"   # Available voices: Matthew, Tiffany, Amy, etc.
-        }
+        "messages": [{"role": "user", "content": [{"text": prompt}]}],
+        "inferenceConfig": {"maxTokens": 2048, "temperature": 0.3},
     }
 
     try:
@@ -157,17 +58,49 @@ def text_to_speech(text: str) -> str:
             modelId=model_id,
             body=json.dumps(request_body),
             contentType="application/json",
-            accept="audio/lpcm",    # Request raw audio bytes
+            accept="application/json",
         )
-
-        # The response body IS the audio bytes (not JSON)
-        audio_bytes = response["body"].read()
-
-        # Encode to Base64 so it can be sent safely over HTTP as a string
-        audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
-        return audio_base64
+        response_body = json.loads(response["body"].read())
+        return response_body["output"]["message"]["content"][0]["text"].strip()
 
     except ClientError as e:
         error_code = e.response["Error"]["Code"]
         error_msg  = e.response["Error"]["Message"]
-        raise RuntimeError(f"Bedrock Nova Sonic error [{error_code}]: {error_msg}")
+        if error_code == "ValidationException" and "inference profile" in error_msg.lower():
+            raise RuntimeError(
+                "This Nova model requires an inference profile. "
+                "Set BEDROCK_EXPLAIN_MODEL_ID to your profile ID or ARN and retry."
+            )
+        raise RuntimeError(f"Bedrock error [{error_code}]: {error_msg}")
+    except NoCredentialsError:
+        raise RuntimeError(
+            "AWS credentials not found. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_REGION."
+        )
+
+
+def text_to_speech(text: str) -> str:
+    """Convert text to MP3 via Amazon Polly and return as base64 string."""
+    region = os.getenv("POLLY_REGION") or os.getenv("AWS_REGION") or "ap-south-1"
+    voice_id = os.getenv("POLLY_VOICE_ID", "Joanna")
+
+    polly = boto3.client(
+        "polly",
+        region_name=region,
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    )
+
+    try:
+        response = polly.synthesize_speech(
+            Text=text, OutputFormat="mp3", VoiceId=voice_id, Engine="neural"
+        )
+        return base64.b64encode(response["AudioStream"].read()).decode("utf-8")
+
+    except ClientError as e:
+        error_code = e.response["Error"]["Code"]
+        error_msg  = e.response["Error"]["Message"]
+        raise RuntimeError(f"Polly TTS error [{error_code}]: {error_msg}")
+    except NoCredentialsError:
+        raise RuntimeError(
+            "AWS credentials not found. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_REGION."
+        )
