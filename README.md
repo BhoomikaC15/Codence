@@ -1,24 +1,24 @@
 # Codence 🌲✨
 > Master code through battle. Learn, compete, and level up with your guild.
 
-Built for the **Amazon Nova AI Hackathon 2026**.
+Built for the **Amazon Nova AI Hackathon 2026** — Multimodal Understanding category.
 
 ---
 
 ## 🎮 What is Codence?
 
-Codence is a multiplayer RPG-styled, pixel-art themed web app that makes learning code actually fun.
+Codence is a multiplayer RPG-styled, pixel-art themed web app that makes learning code interactive and competitive.
 
 Students often glance at code, think they understand it, and move on — only to forget everything later. Codence fixes that by making them *do something* with the code rather than just read it.
 
-### How it works:
-1. 🏰 Players create or join a private **Guild** (room) with friends
-2. 📜 A player submits a code file — any language
-3. 🧠 **Amazon Nova AI** explains it statement by statement with text, visuals, and voice
-4. ⚔️ The game begins — lines of code **vanish** and a timer starts
-5. ✍️ Players race to fill in the missing lines from memory
-6. 🧩 **Quiz rounds** test deeper understanding of the code
-7. 🏆 Points and leaderboard keep it competitive — within your guild only
+### How it works
+1. 🏰 Players create or join a private **Guild** room.
+2. 📜 A player submits a code snippet.
+3. 🧠 **Amazon Nova Lite** explains the code statement by statement.
+4. 🔊 **Amazon Polly (Neural TTS)** converts the explanation to voice.
+5. ⚔️ In the game round, code lines vanish and players fill blanks from memory.
+6. 🧩 **Nova Lite** generates quiz questions and evaluates answers.
+7. 🏆 Live leaderboard keeps the guild battle competitive.
 
 ---
 
@@ -26,170 +26,159 @@ Students often glance at code, think they understand it, and move on — only to
 
 | Layer | Technology |
 |---|---|
-| Frontend | React.js, Tailwind CSS, Framer Motion, Monaco Editor |
-| Backend | Python, FastAPI, python-socketio |
-| AI | Amazon Bedrock — Nova Pro, Nova Sonic, Nova Lite |
-| Realtime | Socket.io (multiplayer room sync) |
+| Frontend | React 19, React Router, Tailwind CSS, Framer Motion, Monaco Editor |
+| Backend | Python, FastAPI, python-socketio, Uvicorn |
+| AI (Code Understanding) | Amazon Bedrock Runtime with **Nova Lite** |
+| AI (Voice) | **Amazon Polly** (Neural TTS) |
+| Realtime | Socket.IO |
 
 ---
 
 ## 📁 Project Structure
-```
+
+```text
 Codence/
-├── frontend/         → React app (UI, game screens, animations)
-├── backend/          → FastAPI server, Socket.IO, game state & Nova AI integration
-└── README.md
+├── .env
+├── README.md
+├── backend/
+│   ├── main.py                # FastAPI + Socket.IO combined ASGI app
+│   ├── game_state.py          # In-memory rooms, players, scores, leaderboard
+│   ├── bedrock.py             # Nova Lite explanation + Polly TTS integration
+│   ├── quiz_generator.py      # Nova Lite quiz generation and answer evaluation
+│   └── requirements.txt
+└── frontend/
+    ├── package.json
+    ├── .env                   # REACT_APP_BACKEND_URL
+    ├── public/
+    └── src/
+        ├── App.js
+        ├── Components/
+        │   ├── PageTransition.js
+        │   └── PixelButton.js
+        ├── pages/
+        │   ├── LandingPage.js
+        │   ├── CreateGuild.js
+        │   ├── JoinGuild.js
+        │   ├── GuildLobby.js
+        │   ├── CodeInput.js
+        │   ├── Explanation.js
+        │   ├── Game.js
+        │   ├── Quiz.js
+        │   └── Results.js
+        └── socket/
+            └── socket.js
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### Frontend
+### 1) Clone and configure env
+```bash
+git clone <your-repo-url>
+cd Codence
+```
+
+Create a root `.env` file:
+
+```env
+AWS_ACCESS_KEY_ID=your_key
+AWS_SECRET_ACCESS_KEY=your_secret
+AWS_REGION=ap-south-1
+
+BEDROCK_REGION=us-east-1
+BEDROCK_EXPLAIN_MODEL_ID=us.amazon.nova-lite-v1:0
+
+POLLY_REGION=ap-south-1
+POLLY_VOICE_ID=Joanna
+```
+
+### 2) Backend
+```bash
+# from repo root
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# Mac/Linux
+source .venv/bin/activate
+
+pip install -r backend/requirements.txt
+python -m uvicorn --app-dir backend main:combined_app --reload
+```
+
+Backend runs on: `http://localhost:8000`
+
+### 3) Frontend
 ```bash
 cd frontend
 npm install
 npm start
 ```
 
-### Backend
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate     # Mac/Linux
-.venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-uvicorn main:combined_app --reload --port 8001
- maind
-🤖 Nova AI Integration
+Frontend runs on: `http://localhost:3000`
 
-Codence integrates multiple AI models through Amazon Bedrock to power different stages of the gameplay experience.
+Set frontend backend URL in `frontend/.env`:
 
-Model	Role in Codence
-Nova Pro	Analyzes submitted code and generates line-by-line explanations of the program logic
-Nova Sonic	Converts explanations into voice narration during the learning phase
-Nova Lite	Generates quiz questions from the submitted code and evaluates player answers during quiz rounds
-AI-Driven Learning Flow
-
-📜 A player uploads a code file
-
-🧠 Nova Pro analyzes the code and generates a clear step-by-step explanation
-
-🔊 Nova Sonic converts the explanation into audio narration for better understanding
-
-🧩 Nova Lite generates multiple-choice quiz questions based on the code
-
-⚡ During quiz rounds, Nova Lite evaluates answers and helps calculate scores
-
-This demonstrates multimodal AI capabilities including code reasoning, natural language explanation, and voice interaction.
-
-⚙️ Backend Infrastructure
-
-The backend powers all real-time multiplayer functionality and game state management.
-
-Key Features
-
-FastAPI server with REST endpoints and health checks
-
-Socket.IO integration for real-time communication between players
-
-Guild Room System — players can create rooms and share a unique 6-digit join code
-
-Game State Management — tracks players, scores, rounds, and leaderboard
-
-Automatic Cleanup — removes disconnected players and deletes empty rooms
-
-Live Leaderboard Updates — score changes are broadcast instantly to all players
-
-🔌 Socket.IO Events
-Event	Direction	Description
-create_room_event	Client → Server	Creates a guild room and returns a 6-digit code
-join_room_event	Client → Server	Joins an existing room using the code
-leave_room_event	Client → Server	Removes a player from a room
-submit_score	Client → Server	Updates player score and broadcasts leaderboard
-player_joined	Server → All	Notifies room when a player joins
-player_left	Server → All	Notifies room when a player leaves
-leaderboard_update	Server → All	Sends live leaderboard updates
-📂 Important Backend Files
-
-backend/main.py → FastAPI + Socket.IO server and event handlers
-
-backend/game_state.py → Room creation, player management, and score tracking
-
-backend/requirements.txt → Python dependencies
-
-👾 Team
-Name	Role
-Bhoomika Choudhury	Frontend — UI & Game Screens
-Disha Tyagi	Backend — FastAPI Server, Socket.IO Multiplayer & Game State
-Himani Lal	Backend — Rooms, Sockets & Deployment
-Ghanisht Sobti	AI Integration — Nova Pro & Nova Sonic Code Explanation
-=======
+```env
+REACT_APP_BACKEND_URL=http://localhost:8000
 ```
+
 ---
-## 🧠 AI Code Explanation
 
-Codence uses **Amazon Nova AI via AWS Bedrock** to explain code before gameplay begins.
+## 🤖 AI Integration
 
-When a user submits code:
-
-1. The backend sends the code to **Amazon Nova Pro**.
-2. Nova Pro generates a **statement-by-statement explanation** of the code.
-3. The explanation is sent to **Amazon Nova Sonic** to generate **voice narration**.
-4. The backend returns both **text explanation and audio narration** to the frontend.
-
-### API Endpoint
-
-POST /explain-code
-
-Request:
-{
-  "code": "def add(a,b): return a+b"
-}
-
-Response:
-{
-  "explanation": "Step-by-step explanation of the code",
-  "audio_base64": "generated audio narration"
-}
-
-## 🤖 Nova AI Integration
-
-| Model | Role in Codence |
+| Service | Role in Codence |
 |---|---|
-| **Nova Pro** | Analyzes submitted code, generates statement-by-statement explanation and quiz questions |
-| **Nova Sonic** | Converts explanation to voice narration played during the explanation phase |
-| **Nova Lite** | Evaluates player fill-in-the-blank answers and generates quiz options |
+| **Nova Lite (Bedrock)** | Code explanation, quiz generation, answer evaluation |
+| **Amazon Polly** | Voice narration for code explanations |
+
+### AI-driven flow
+1. Submit code snippet.
+2. Nova Lite returns explanation text.
+3. Polly generates narration audio.
+4. Nova Lite creates 5-question MCQ quiz.
+5. Nova Lite evaluates player fill-in answers.
 
 ---
-## ⚙️ Backend Infrastructure
 
-The backend powers all real-time multiplayer functionality and game state for Codence.
+## 🔌 API Endpoints
 
-### What's built:
-- **FastAPI server** with REST routes and health check endpoint
-- **Socket.IO integration** for real-time communication between players
-- **Room (Guild) system** — players can create a room and get a unique 6-digit code, or join an existing room using a code
-- **Game state management** — tracks all players in a room, their scores, current round, and leaderboard
-- **Auto cleanup** — empty rooms are deleted automatically, disconnected players are removed gracefully
-- **Leaderboard broadcasting** — score updates are pushed live to all players in the room
+### REST endpoints
 
-### Socket.IO Events:
-
-| Event | Direction | What it does |
+| Method | Endpoint | Description |
 |---|---|---|
-| `create_room_event` | Client → Server | Creates a new guild room, returns 6-digit code |
-| `join_room_event` | Client → Server | Joins an existing room using a code |
-| `leave_room_event` | Client → Server | Removes player from room |
-| `submit_score` | Client → Server | Updates player score, broadcasts leaderboard |
-| `player_joined` | Server → All | Notifies room when someone joins |
-| `player_left` | Server → All | Notifies room when someone leaves |
-| `leaderboard_update` | Server → All | Pushes live leaderboard to all players |
+| `GET` | `/` | Basic welcome + online status |
+| `GET` | `/health` | Health check |
+| `GET` | `/rooms` | Active room codes and count |
+| `POST` | `/explain-code` | Nova Lite explanation + Polly audio (`audio_base64`) |
+| `POST` | `/generate-quiz` | Generate MCQ quiz from submitted code |
+| `POST` | `/evaluate-answer` | Evaluate fill-in-the-blank answer |
 
-### Files:
-- `backend/main.py` — FastAPI + Socket.IO server, all event handlers
-- `backend/game_state.py` — Room creation, player management, score tracking
-- `backend/requirements.txt` — Python dependencies
+### Socket.IO events (core)
+
+| Event | Direction | Description |
+|---|---|---|
+| `create_room_event` | Client → Server | Create guild room |
+| `join_room_event` | Client → Server | Join room by code |
+| `leave_room_event` | Client → Server | Leave room |
+| `submit_score` | Client → Server | Submit points and trigger leaderboard refresh |
+| `request_leaderboard` | Client → Server | Fetch latest leaderboard |
+| `player_joined` | Server → Room | Notify room on join |
+| `player_left` | Server → Room | Notify room on leave/disconnect |
+| `leaderboard_update` | Server → Room / Client | Push leaderboard updates |
+| `welcome` | Server → Client | Initial socket welcome payload |
+| `pong` | Server → Client | Ping response |
+
+---
+
+## ⚙️ Backend Notes
+
+- Room codes are generated in-memory; data resets when backend restarts.
+- Empty rooms are auto-deleted.
+- `.env` loading is path-stable from backend modules.
+- CORS is currently open (`*`) for hackathon speed; lock this down for production.
 
 ---
 
@@ -197,13 +186,15 @@ The backend powers all real-time multiplayer functionality and game state for Co
 
 | Name | Role |
 |---|---|
-| Bhoomika Choudhury | Frontend — UI & Game Screens |
-| Disha Tyagi | Backend — FastAPI Server, Socket.IO Multiplayer & Game State |
-| Himani Lal | Backend —  Rooms, Sockets & Deployment  |
-| Ghanisht Sobti | Nova Pro + Sonic — Code Explanation |
+| Bhoomika Choudhury | Frontend — UI & game screens |
+| Disha Tyagi | AI explanation + voice integration |
+| Himani Lal | Quiz generation + answer evaluation |
+| Ghanisht Sobti | Backend — FastAPI, Socket.IO, rooms, deployment |
 
 ---
 
 ## 🏆 Hackathon
 
-This project is submitted under the **Multimodal Understanding** category of the Amazon Nova AI Hackathon 2026, demonstrating the use of Nova Pro, Nova Sonic, and Nova Lite across text, voicmain
+Submitted under **Multimodal Understanding** for the Amazon Nova AI Hackathon 2026, combining code reasoning, voice narration, multiplayer gameplay, and quiz-based reinforcement.
+
+**#AmazonNova**
